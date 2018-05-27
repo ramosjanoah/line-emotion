@@ -10,25 +10,23 @@ from linebot.models import (
     MessageEvent, TextMessage, TextSendMessage,
 )
 
+# create app
 app = Flask(__name__)
-
 with open('channel_access_token') as fi:
-	text = fi.read().split('\n')
-	cat = text[0]
-	secret = text[1]
-
-print(cat)
-print(secret)
-
+    text = fi.read().split('\n')
+    cat = text[0]
+    secret = text[1]
 line_bot_api = LineBotApi(cat)
 handler = WebhookHandler(secret)
 
-@app.route("/darling", methods=['GET'])
-def darling():
-	text = "Oh darling, your request is {}<br>".format(request)
-	text += "LINE BOT API : {}<br>".format(line_bot_api)
-	text += "Secret[0:10] : {}<br>".format(secret[0:10])
-	return text
+# import wrapper
+from wrapper import predict
+
+@app.route("/elur_test", methods=['GET'])
+def elur_test():
+    sentence = 'Apa sih, ga lucu'
+    emo = predict(sentence)
+    return emo
 
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -49,9 +47,13 @@ def callback():
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
-    line_bot_api.reply_message(
-        event.reply_token,
-        TextSendMessage(text="Apapun yang kamu katakan, aku akan reply pake pesan ini."))
+
+    text = event.message.text
+    emo = predict(text)
+
+    line_bot_api.reply_message(event.reply_token,
+                               TextSendMessage(text="Predicted emotion: {}".format(emo)))
+
 
 
 if __name__ == "__main__":
